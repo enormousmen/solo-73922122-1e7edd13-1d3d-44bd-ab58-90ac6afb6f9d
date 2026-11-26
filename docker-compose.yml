@@ -1,0 +1,35 @@
+name: ntp-probe
+
+services:
+  api:
+    build: ./app
+    image: ntp-probe-app
+    ports:
+      - "8000:8000"
+    environment:
+      NTP_A_HOST: ntp-a
+      NTP_A_PORT: "123"
+      NTP_B_HOST: ntp-b
+      NTP_B_PORT: "123"
+      PROBE_TIMEOUT_SECONDS: "1.0"
+    depends_on:
+      - ntp-a
+      - ntp-b
+
+  # 候选时源 A：比真实时间快 2.5s，回包快（0.15s）
+  ntp-a:
+    image: ntp-probe-app
+    command: ["python", "-m", "app.mock_server"]
+    environment:
+      SERVER_PORT: "123"
+      SERVER_OFFSET_SECONDS: "2.5"
+      SERVER_DELAY_SECONDS: "0.15"
+
+  # 候选时源 B：比真实时间慢 1.2s，回包慢（0.7s）
+  ntp-b:
+    image: ntp-probe-app
+    command: ["python", "-m", "app.mock_server"]
+    environment:
+      SERVER_PORT: "123"
+      SERVER_OFFSET_SECONDS: "-1.2"
+      SERVER_DELAY_SECONDS: "0.7"
